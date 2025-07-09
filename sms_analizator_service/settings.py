@@ -16,15 +16,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Настройка логирования
-try:
-    from utils.logger_config import setup_logging
-    setup_logging()
-except ImportError:
-    pass  # В случае если логирование еще не настроено
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Настройка логирования (после определения BASE_DIR)
+try:
+    from utils.logger_config import setup_logging
+    setup_logging(BASE_DIR)
+except ImportError:
+    pass  # В случае если логирование еще не настроено
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/

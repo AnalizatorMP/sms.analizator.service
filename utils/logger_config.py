@@ -10,9 +10,12 @@ from loguru import logger
 from django.conf import settings
 
 
-def setup_logging():
+def setup_logging(base_dir=None):
     """
     Настройка системы логирования с использованием loguru.
+    
+    Args:
+        base_dir: Базовая директория проекта. Если не указана, пытается получить из settings
     
     Конфигурирует:
     - Различные уровни логирования для разных компонентов
@@ -25,7 +28,16 @@ def setup_logging():
     logger.remove()
     
     # Определяем директорию для логов
-    log_dir = Path(settings.BASE_DIR) / "logs"
+    if base_dir:
+        log_dir = Path(base_dir) / "logs"
+    else:
+        try:
+            from django.conf import settings
+            log_dir = Path(settings.BASE_DIR) / "logs"
+        except (ImportError, AttributeError):
+            # Fallback - используем директорию проекта
+            log_dir = Path(__file__).resolve().parent.parent / "logs"
+    
     log_dir.mkdir(exist_ok=True)
     
     # Формат для логов
@@ -44,8 +56,16 @@ def setup_logging():
         "{message}"
     )
     
+    # Определяем режим отладки
+    debug_mode = True
+    try:
+        from django.conf import settings
+        debug_mode = settings.DEBUG
+    except (ImportError, AttributeError):
+        pass
+    
     # Консольный вывод (только в режиме отладки)
-    if settings.DEBUG:
+    if debug_mode:
         logger.add(
             sys.stderr,
             format=log_format,
@@ -149,11 +169,24 @@ def get_logger(name: str = None, **extra_context):
     return logger
 
 
-# Предустановленные логгеры для разных компонентов
-api_logger = get_logger(api=True)
-telegram_logger = get_logger(telegram=True)
-webhook_logger = get_logger(webhook=True)
-database_logger = get_logger(database=True)
+# Предустановленные логгеры для разных компонентов (ленивая инициализация)
+def get_api_logger():
+    return get_logger(api=True)
+
+def get_telegram_logger():
+    return get_logger(telegram=True)
+
+def get_webhook_logger():
+    return get_logger(webhook=True)
+
+def get_database_logger():
+    return get_logger(database=True)
+
+# Для обратной совместимости
+api_logger = get_api_logger()
+telegram_logger = get_telegram_logger()
+webhook_logger = get_webhook_logger()
+database_logger = get_database_logger()
 
 
 def log_request(request, response_status=None, extra_info=None):
@@ -178,9 +211,9 @@ def log_request(request, response_status=None, extra_info=None):
         log_message += f" | {extra_info}"
     
     if response_status and response_status >= 400:
-        api_logger.warning(log_message)
+        get_api_logger().warning(log_message)
     else:
-        api_logger.info(log_message)
+        get_api_logger().info(log_message)
 
 
 def log_telegram_event(event_type: str, user_id: str = None, message: str = None, success: bool = True):
@@ -202,9 +235,9 @@ def log_telegram_event(event_type: str, user_id: str = None, message: str = None
         log_message += f" | {message}"
     
     if success:
-        telegram_logger.info(log_message)
+        get_telegram_logger().info(log_message)
     else:
-        telegram_logger.error(log_message)
+        get_telegram_logger().error(log_message)
 
 
 def log_webhook_request(token: str, data: dict, processing_result: str = None):
@@ -227,7 +260,7 @@ def log_webhook_request(token: str, data: dict, processing_result: str = None):
     if processing_result:
         log_message += f" | Result: {processing_result}"
     
-    webhook_logger.info(log_message)
+    get_webhook_logger().info(log_message)
 
 
 def log_database_operation(operation: str, model: str, instance_id=None, user_id=None, success: bool = True):
@@ -250,6 +283,6 @@ def log_database_operation(operation: str, model: str, instance_id=None, user_id
         log_message += f" | User: {user_id}"
     
     if success:
-        database_logger.info(log_message)
+        get_database_logger().info(log_message)
     else:
-        database_logger.error(log_message) 
+        get_database_logger().error(log_message) 

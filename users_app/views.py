@@ -12,7 +12,7 @@ from loguru import logger
 
 from users_app.forms import ServiceForm, ServiceKeyForm
 from users_app.models import NumbersService, Rules, Key, User
-from utils.logger_config import log_request, log_webhook_request, api_logger
+from utils.logger_config import log_request, log_webhook_request, get_api_logger
 
 
 def login_view(request):

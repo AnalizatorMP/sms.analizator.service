@@ -13,7 +13,7 @@ from telegram.ext import (
 from loguru import logger
 
 from users_app.models import TelegramChats, User
-from utils.logger_config import log_telegram_event, telegram_logger
+from utils.logger_config import log_telegram_event, get_telegram_logger
 
 
 # Обработчик полученного контакта
@@ -38,7 +38,7 @@ def create_user(phone, telegram_id, password):
     )
     new_user.set_password(password)
     new_user.save()
-    telegram_logger.info(f"Создан новый пользователь: {phone} (TG ID: {telegram_id})")
+    get_telegram_logger().info(f"Создан новый пользователь: {phone} (TG ID: {telegram_id})")
     return new_user
 
 
@@ -151,7 +151,7 @@ def main():
         app.add_handler(CommandHandler("start", start))
         app.add_handler(MessageHandler(filters.CONTACT, handle_contact))
 
-        telegram_logger.info("Telegram бот запущен и готов к работе")
+        get_telegram_logger().info("Telegram бот запущен и готов к работе")
         app.run_polling(allowed_updates=Update.ALL_TYPES)
     except Exception as e:
         logger.error(f"Ошибка запуска Telegram бота: {e}")

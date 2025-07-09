@@ -21,7 +21,7 @@ from loguru import logger
 
 from users_app.api.serializers import UserSerializer
 from users_app.models import User
-from utils.logger_config import log_request, api_logger
+from utils.logger_config import log_request, get_api_logger
 
 
 def authenticate_custom(request, email=None, password=None, **kwargs):
